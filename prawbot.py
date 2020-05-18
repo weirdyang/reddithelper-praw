@@ -8,8 +8,8 @@ import requests
 
 def main():
     reddit = login_reddit()
-    url = 'https://www.reddit.com/r/AskReddit/comments/7zzim3/what_app_is_so_useful_you_cant_believe_its_free/'
-    answers_scrape('outoftheloop', reddit)
+    url = 'https://www.reddit.com/r/AskReddit/comments/ep7tm4/depressed_people_of_reddit_whats_your_goto_i_want/'
+    generate_md_thread_yt(url, reddit, 5)
 
 
 def comment_loop(subname, reddit):
@@ -120,20 +120,20 @@ def generate_html_thread(url, reddit):
     f.write("</table>")
     f.close()
 
-def time_scrape_sub(subname, reddit):
+def time_scrape_sub(subname, reddit, search_term):
     subreddit = reddit.subreddit(subname)
     f = open(subname, 'w+', encoding='utf-8')
     f.write("User|Title|Score|Date\n")
     f.write(":--|:--|:--|:--\n")
     for submission in subreddit.submissions(start= None, end= 1515326411):
-        if "amos yee" in submission.title.lower():
+        if search_term in submission.title.lower():
             date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(submission.created_utc))
             f.write("{0}| [{1}]({2})|{3}|{4}\n".format(submission.author, submission.title, submission.permalink, submission.score, date))
         else:
             continue
     f.close()
 
-def time_scrape_com(subname, reddit):
+def time_scrape_com(subname, reddit, search_term):
     subreddit = reddit.subreddit(subname)
     print(reddit.auth.limits)
     f = open(subname, 'w+', encoding='utf-8')
@@ -144,7 +144,7 @@ def time_scrape_com(subname, reddit):
         for comment in submission.comments.list():
             if comment.author == "amos-counter-bot" or comment.author == "sg_amos_yee_counter" or comment.author == "rsg-retrivr":
                 continue
-            elif "amos yee" in comment.body.lower():
+            elif search_term in comment.body.lower():
                 date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(submission.created_utc))
                 answer = comment.body.splitlines()
                 comment_text = ' '.join(answer)
@@ -155,7 +155,7 @@ def time_scrape_com(subname, reddit):
                 continue
 
 
-def generate_md_thread(url, reddit):
+def generate_md_thread(url, reddit, limit):
     reddit = reddit
     print(reddit.auth.limits)
     submission = reddit.submission(url=url)
@@ -163,23 +163,46 @@ def generate_md_thread(url, reddit):
     title = submission.title    
     #submission_body = submission.selftext
     filename = ("{}.txt".format(submission.id))
-    submission.comments.replace_more(limit = None, threshold = 1)
+    submission.comments.replace_more(limit = limit, threshold = 1)
     print(reddit.auth.limits)
-    source = ("https://www.reddit.com/{}".format(submission.permalink))
+    source = ("https://www.reddit.com{}".format(submission.permalink))
     f = open(filename, 'w', encoding='utf-8')
     f.write("[Source]({})\n\n".format(source))
     f.write('User| Answer| \n:--|:--\n')
     for comment in submission.comments.list():
         if comment.score > 500 and comment.depth == 0:
             answer = comment.body.splitlines()
-            string_insert = ("[{0}]({1})| {2} upvotes\n".format(comment.author, comment.permalink, comment.score))
+            string_insert = ("[{0}](https://www.reddit.com{1})| {2} upvotes\n".format(comment.author, comment.permalink, comment.score))
             f.write(string_insert)
             for line in answer:
                 if len(line)>0:
                     string_insert = (" | {}\n".format(line))
                     f.write(string_insert)
     f.close()
-
+def generate_md_thread_yt(url, reddit, limit):
+    reddit = reddit
+    print(reddit.auth.limits)
+    submission = reddit.submission(url=url)
+    print(reddit.auth.limits)
+    title = submission.title    
+    #submission_body = submission.selftext
+    filename = ("{}.txt".format(submission.id))
+    submission.comments.replace_more(limit = limit, threshold = 1)
+    print(reddit.auth.limits)
+    source = ("https://www.reddit.com{}".format(submission.permalink))
+    f = open(filename, 'w', encoding='utf-8')
+    f.write("[Source]({})\n\n".format(source))
+    f.write('User| Answer| \n:--|:--\n')
+    for comment in submission.comments.list():
+        if comment.score > 500 and comment.depth == 0:
+            answer = comment.body.splitlines()
+            string_insert = ("[{0}](https://www.reddit.com{1})| {2} upvotes\n".format(comment.author, comment.permalink, comment.score))
+            f.write(string_insert)
+            for line in answer:
+                if len(line)>0:
+                    string_insert = (" | [{0}](https://www.youtube.com/results?search_query={1})\n".format(line, line.replace(" ", "%2") ))
+                    f.write(string_insert)
+    f.close()
 def answers_scrape(subname , reddit):
     subreddit = reddit.subreddit(subname)
     i = 0
@@ -190,7 +213,10 @@ def answers_scrape(subname , reddit):
     #submission_body = submission.selftext
     for submission in subreddit.top('week'):
         title = submission.title
-        top_comment = (submission.comments.list())[0]
+        if(submission.comments.list()[0].author.name.lower() == "automoderator"):
+            top_comment = submission.comments.list()[1]
+        else:
+            top_comment = (submission.comments.list())[0]
         print(top_comment)
         f.write("[{0}]({1}) | {2} - Score {3}\n".format(title, submission.permalink, top_comment.author, top_comment.score))
         for line in top_comment.body.splitlines():
