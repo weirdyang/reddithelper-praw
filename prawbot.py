@@ -8,11 +8,11 @@ import requests
 
 def main():
     reddit = login_reddit()
-    url = 'https://www.reddit.com/r/AskReddit/comments/ep7tm4/depressed_people_of_reddit_whats_your_goto_i_want/'
-    generate_md_thread_yt(url, reddit, 5)
+    url = 'https://www.reddit.com/r/TooAfraidToAsk/comments/gv2d5a/whats_wrong_with_saying_all_lives_matter/'
+    generate_md_thread(url, reddit, 5)
 
 
-def comment_loop(subname, reddit):
+def comment_loop(subname, reddit, list_of_words):
     print(reddit.auth.limits)
     for comment in reddit.subreddit(subname).stream.comments():
         if any(word in comment.body.lower() for word in list_of_words):
