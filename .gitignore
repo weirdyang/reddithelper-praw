@@ -2,3 +2,5 @@
 *.txt
 praw.ini
 praw.ini
+outoftheloop
+*.ini
